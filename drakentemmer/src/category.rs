@@ -1,4 +1,6 @@
 use crate::Drakentemmer;
+pub mod application;
+pub mod client;
 
 pub trait GetClientApi {
     fn client(&self, client_api_key: &str) -> ClientApi;
