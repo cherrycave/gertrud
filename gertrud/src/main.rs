@@ -8,6 +8,10 @@ pub mod response;
 
 pub mod permissions;
 
+pub mod standby;
+
+pub mod send_serialized;
+
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     dotenvy::dotenv().ok();

@@ -1,4 +1,4 @@
-use std::{env, sync::Arc};
+use std::{env, net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::ws::{Message, WebSocket},
@@ -7,17 +7,22 @@ use axum::{
 use futures::stream::SplitSink;
 use tokio::sync::Mutex;
 
-use crate::permissions::Permissions;
+use crate::{permissions::Permissions, standby::Standby};
 
 mod websocket_handler;
+
+pub mod messages;
 
 #[derive(Clone)]
 pub struct WebsocketState {
     pub redis: Arc<Mutex<redis::aio::ConnectionManager>>,
     pub connections: Arc<Mutex<Vec<WebsocketConnection>>>,
+    pub standby: Arc<Standby>,
 }
 
 pub struct WebsocketConnection {
+    pub addr: SocketAddr,
+    pub identifier: String,
     pub permissions: Permissions,
     pub sender: Arc<Mutex<SplitSink<WebSocket, Message>>>,
 }
@@ -30,6 +35,7 @@ pub async fn websocket_router() -> eyre::Result<Router> {
                 .await?,
         )),
         connections: Arc::new(Mutex::new(Vec::new())),
+        standby: Arc::new(Standby::default()),
     };
 
     Ok(Router::new()
