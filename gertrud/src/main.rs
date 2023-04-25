@@ -22,7 +22,7 @@ async fn main() -> eyre::Result<()> {
 
     let app = Router::new().route("/", get(root)).merge(websocket_router);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 6969));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 6969));
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
