@@ -52,6 +52,8 @@ pub async fn process_send_request(
 
     let response = standby.wait_for_response(new_id).await;
 
+    tracing::info!("got response");
+
     let response = match response {
         Ok(r) => r,
         Err(e) => return Err(e.to_string()),
