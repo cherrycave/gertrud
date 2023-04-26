@@ -41,18 +41,14 @@ pub async fn process_send_request(
         payload: send_request.payload,
     };
 
-    tracing::info!("found connection");
-
     connection
         .send_serialized(message)
         .await
         .map_err(|e| e.to_string())?;
 
-    tracing::info!("waiting for response");
+    drop(connections);
 
     let response = standby.wait_for_response(new_id).await;
-
-    tracing::info!("got response");
 
     let response = match response {
         Ok(r) => r,
