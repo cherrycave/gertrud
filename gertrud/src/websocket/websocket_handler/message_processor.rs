@@ -28,7 +28,7 @@ pub fn process_message(
 
             let message = message.unwrap();
 
-            tracing::info!("{} sent message: {:?}", who, message);
+            tracing::debug!("{} sent message: {:?}", who, message);
 
             match message.message_type {
                 crate::messages::MessageType::Init => {
@@ -119,7 +119,6 @@ async fn handle_init_message(
 ) -> Result<(), String> {
     match message.payload.clone() {
         crate::messages::WebSocketMessagePayload::SendRequest(_) => {
-            tracing::info!("{} sent SendRequest", who);
             process_send_request(message.clone(), connections.clone(), standby).await
         }
         crate::messages::WebSocketMessagePayload::GenericOk => {

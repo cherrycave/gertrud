@@ -15,8 +15,6 @@ pub async fn process_send_request(
 ) -> Result<(), String> {
     let connections = connections.lock().await;
 
-    tracing::info!("connections locked");
-
     let permitted_connections: Vec<&WebsocketConnection> = connections
         .iter()
         .filter(|c| c.permissions.contains(Permissions::READ_SEND) && c.identifier == "proxy")
