@@ -15,6 +15,7 @@ pub struct ClientApi {
     client_api_key: String,
 }
 
+#[allow(dead_code)]
 pub struct ApplicationApi {
     drakentemmer: Drakentemmer,
     application_api_key: String,

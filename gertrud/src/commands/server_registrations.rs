@@ -1,5 +1,6 @@
 use axum::{extract::State, response::Result, Extension, Json};
 use drakentemmer::{client::server_details::ServerDetails, ClientApi};
+use futures::StreamExt;
 use mongodb::bson::doc;
 use nanoid::nanoid;
 
@@ -19,13 +20,18 @@ pub struct RegisterServerBody {
     pub server_type: ServerType,
 }
 
-pub async fn register_server_command(
+pub async fn server_registrations(
     Extension(auth): Extension<AuthorizationExtension>,
     State(state): State<BackendState>,
     Json(body): Json<RegisterServerBody>,
 ) -> Result<(), String> {
     let result: Result<(String, u16), String> = if body.register {
         let (host, port) = get_from_ptero(&auth.identifier, &state.drakentemmer_client).await?;
+
+        let _ = state
+            .server_collection
+            .delete_one(doc! { "_id": auth.identifier.clone() }, None)
+            .await;
 
         let insert_result = state
             .server_collection
@@ -101,6 +107,37 @@ pub async fn register_server_command(
     }
 
     Ok(())
+}
+
+pub async fn get_server_registrations(
+    State(state): State<BackendState>,
+) -> Result<Json<Vec<RegisterServerRequest>>, String> {
+    let result = state.server_collection.find(doc! {}, None).await;
+
+    if let Err(e) = result {
+        tracing::error!("Could not get server registrations: {}", e);
+        return Err("Could not get server registrations".to_string());
+    }
+
+    let mut result = result.unwrap();
+
+    let mut registrations = Vec::new();
+
+    while let Some(registration) = result.next().await {
+        let registration = registration.map_err(|err| err.to_string())?;
+
+        let registration = RegisterServerRequest {
+            register: true,
+            server_type: registration.server_type,
+            identifier: registration.identifier,
+            host: registration.host,
+            port: registration.port,
+        };
+
+        registrations.push(registration);
+    }
+
+    Ok(Json(registrations))
 }
 
 async fn get_from_ptero(identifier: &str, client_api: &ClientApi) -> Result<(String, u16), String> {

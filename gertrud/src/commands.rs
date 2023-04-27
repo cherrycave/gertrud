@@ -10,9 +10,9 @@ use redis::AsyncCommands;
 
 use crate::{key_type::KeyType, state::BackendState};
 
-use self::register_server_command::register_server_command;
+use self::server_registrations::{get_server_registrations, server_registrations};
 
-mod register_server_command;
+mod server_registrations;
 
 #[derive(Clone)]
 pub struct AuthorizationExtension {
@@ -65,7 +65,13 @@ async fn auth<'c, B>(
 
 pub fn commands_router(state: BackendState) -> eyre::Result<Router> {
     Ok(Router::new()
-        .route("/register-server", post(register_server_command))
+        .nest(
+            "/servers/",
+            Router::new().route(
+                "/registrations",
+                post(server_registrations).get(get_server_registrations),
+            ),
+        )
         .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .with_state(state))
 }

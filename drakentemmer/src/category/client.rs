@@ -10,6 +10,7 @@ trait AuthenticateClientRequest {
 
 impl AuthenticateClientRequest for RequestBuilder {
     fn authenticate_client_request(self, client_api: &ClientApi) -> Self {
-        self.bearer_auth(client_api.client_api_key.to_string())
+        let token = client_api.client_api_key.to_string();
+        self.bearer_auth(token)
     }
 }
