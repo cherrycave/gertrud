@@ -1,21 +1,12 @@
 use std::{net::SocketAddr, ops::ControlFlow, sync::Arc};
 
 use axum::extract::ws::Message;
-use tokio::sync::Mutex;
 
-use crate::{
-    messages::WebSocketMessage, send_serialized::SendSerialized, standby::Standby,
-    WebsocketConnection,
-};
-
-use self::send_request::process_send_request;
-
-mod send_request;
+use crate::{messages::WebSocketMessage, standby::Standby};
 
 pub fn process_message(
     msg: Message,
     who: SocketAddr,
-    connections: Arc<Mutex<Vec<WebsocketConnection>>>,
     standby: Arc<Standby>,
 ) -> ControlFlow<(), ()> {
     match msg {
@@ -31,52 +22,7 @@ pub fn process_message(
             tracing::debug!("{} sent message: {:?}", who, message);
 
             match message.message_type {
-                crate::messages::MessageType::Init => {
-                    tokio::spawn(async move {
-                        let result =
-                            handle_init_message(who, message.clone(), connections.clone(), standby)
-                                .await;
-
-                        match result {
-                            Ok(_) => {
-                                let connections = connections.lock().await;
-                                let connection = connections
-                                    .iter()
-                                    .find(|connection| connection.addr == who)
-                                    .unwrap();
-
-                                let _ = connection
-                                    .send_serialized(WebSocketMessage {
-                                        message_id: message.message_id,
-                                        message_type: crate::messages::MessageType::Response,
-                                        payload:
-                                            crate::messages::WebSocketMessagePayload::GenericOk,
-                                    })
-                                    .await;
-                            }
-                            Err(err) => {
-                                let connections = connections.lock().await;
-                                let connection = connections
-                                    .iter()
-                                    .find(|connection| connection.addr == who)
-                                    .unwrap();
-
-                                let _ = connection
-                                    .send_serialized(WebSocketMessage {
-                                        message_id: message.message_id,
-                                        message_type: crate::messages::MessageType::Response,
-                                        payload:
-                                            crate::messages::WebSocketMessagePayload::GenericError(
-                                                crate::messages::common::GenericError {
-                                                    message: err,
-                                                },
-                                            ),
-                                    })
-                                    .await;
-                            }
-                        }
-                    });
-                }
+                crate::messages::MessageType::Init => {}
                 crate::messages::MessageType::Response => {
                     standby.process_message(message);
                 }
@@ -108,27 +54,4 @@ pub fn process_message(
         _ => {}
     }
     ControlFlow::Continue(())
-}
-
-#[allow(unused_variables)]
-async fn handle_init_message(
-    who: SocketAddr,
-    message: WebSocketMessage,
-    connections: Arc<Mutex<Vec<WebsocketConnection>>>,
-    standby: Arc<Standby>,
-) -> Result<(), String> {
-    match message.payload.clone() {
-        crate::messages::WebSocketMessagePayload::SendRequest(_) => {
-            process_send_request(message.clone(), connections.clone(), standby).await
-        }
-        crate::messages::WebSocketMessagePayload::GenericOk => {
-            Err("Unknown payload as init message".to_string())
-        }
-        crate::messages::WebSocketMessagePayload::GenericError(_) => {
-            Err("Unknown payload as init message".to_string())
-        }
-        crate::messages::WebSocketMessagePayload::Empty => {
-            Err("Unknown payload as init message".to_string())
-        }
-    }
 }

@@ -14,15 +14,14 @@ use redis::AsyncCommands;
 use tokio::{select, sync::Mutex};
 
 use crate::{
-    messages::WebSocketMessage, permissions::Permissions, standby::Standby,
+    key_type::KeyType, messages::WebSocketMessage, standby::Standby, state::BackendState,
     websocket::websocket_handler::message_processor::process_message, WebsocketConnection,
-    WebsocketState,
 };
 
 mod message_processor;
 
 pub async fn ws_handler(
-    State(state): State<WebsocketState>,
+    State(state): State<BackendState>,
     ws: WebSocketUpgrade,
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -48,24 +47,24 @@ pub async fn ws_handler(
 
     let mut redis = state.redis.lock().await;
 
-    let permissions = redis.get(format!("auth.{}", auth_header)).await;
+    let key_type = redis.get(format!("auth.{}", auth_header)).await;
 
     drop(redis);
 
-    if let Err(e) = permissions {
-        tracing::error!("Could not get permissions for key {}: {}", auth_header, e);
+    if let Err(e) = key_type {
+        tracing::error!("Could not get server type from key {}: {}", auth_header, e);
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let permissions: Permissions = permissions.unwrap();
+    let key_type = key_type.unwrap();
 
     Ok(ws.on_upgrade(move |socket| {
         handle_socket(
             socket,
             addr,
+            key_type,
             server_identifier,
             state.connections.clone(),
-            permissions,
             state.standby,
         )
     }))
@@ -74,9 +73,9 @@ pub async fn ws_handler(
 async fn handle_socket(
     mut socket: WebSocket,
     who: SocketAddr,
+    key_type: KeyType,
     identifier: String,
     connections: Arc<Mutex<Vec<WebsocketConnection>>>,
-    permissions: Permissions,
     standby: Arc<Standby>,
 ) {
     if socket.send(Message::Ping(vec![4, 2, 0])).await.is_ok() {
@@ -92,17 +91,15 @@ async fn handle_socket(
 
     connections.lock().await.push(WebsocketConnection {
         addr: who,
+        key_type,
         identifier: identifier.to_string(),
-        permissions,
         sender: sender.clone(),
     });
 
-    let connections_clone = connections.clone();
     let standby_clone = standby.clone();
     let recv_task = tokio::spawn(async move {
-        let connections = connections_clone;
         while let Some(Ok(msg)) = receiver.next().await {
-            if process_message(msg, who, connections.clone(), standby_clone.clone()).is_break() {
+            if process_message(msg, who, standby_clone.clone()).is_break() {
                 break;
             }
         }
@@ -151,9 +148,9 @@ async fn handle_socket(
         },
     }
 
-    let _ = sender.lock().await.close().await;
-
     connections.lock().await.retain(|c| c.addr != who);
+
+    let _ = sender.lock().await.close().await;
 
     tracing::debug!("Websocket context {} destroyed", who);
 }

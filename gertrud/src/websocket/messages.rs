@@ -1,10 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use self::common::{GenericError, SendRequest};
+use self::message_impl::{GenericError, SendRequest};
 
-pub mod common;
-pub mod incoming;
-pub mod outgoing;
+mod message_impl;
+pub use message_impl::*;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -32,4 +31,5 @@ pub enum WebSocketMessagePayload {
     #[serde(rename = "empty")]
     Empty,
     SendRequest(SendRequest),
+    RegisterServerRequest(RegisterServerRequest),
 }

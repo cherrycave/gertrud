@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+drakentemmer = { path = "../drakentemmer" }
+
 axum = { version = "0.6", features = ["ws", "headers"] }
 
 serde = { version = "1.0.160", features = ["derive"] }
@@ -27,3 +29,4 @@ bitflags = "2.2.1"
 eyre = "0.6.8"
 dotenvy = "0.15.7"
 dashmap = "5.4.0"
+mongodb = "2.5.0"
