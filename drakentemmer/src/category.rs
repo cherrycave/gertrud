@@ -3,25 +3,25 @@ pub mod application;
 pub mod client;
 
 pub trait GetClientApi {
-    fn client(&self, client_api_key: &str) -> ClientApi;
+    fn client(self, client_api_key: &str) -> ClientApi;
 }
 
 pub trait GetApplicationApi {
-    fn client(&self, application_api_key: &str) -> ApplicationApi;
+    fn application(self, application_api_key: &str) -> ApplicationApi;
 }
 
-pub struct ClientApi<'d> {
-    drakentemmer: &'d Drakentemmer,
+pub struct ClientApi {
+    drakentemmer: Drakentemmer,
     client_api_key: String,
 }
 
-pub struct ApplicationApi<'d> {
-    drakentemmer: &'d Drakentemmer,
+pub struct ApplicationApi {
+    drakentemmer: Drakentemmer,
     application_api_key: String,
 }
 
 impl GetClientApi for Drakentemmer {
-    fn client(&self, client_api_key: &str) -> ClientApi {
+    fn client(self, client_api_key: &str) -> ClientApi {
         ClientApi {
             drakentemmer: self,
             client_api_key: client_api_key.to_string(),
@@ -30,7 +30,7 @@ impl GetClientApi for Drakentemmer {
 }
 
 impl GetApplicationApi for Drakentemmer {
-    fn client(&self, application_api_key: &str) -> ApplicationApi {
+    fn application(self, application_api_key: &str) -> ApplicationApi {
         ApplicationApi {
             drakentemmer: self,
             application_api_key: application_api_key.to_string(),
