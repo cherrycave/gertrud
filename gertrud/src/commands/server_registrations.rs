@@ -24,7 +24,7 @@ pub async fn server_registrations(
     Extension(auth): Extension<AuthorizationExtension>,
     State(state): State<BackendState>,
     Json(body): Json<RegisterServerBody>,
-) -> Result<(), String> {
+) -> Result<Json<RegisterServerRequest>, String> {
     let result: Result<(String, u16), String> = if body.register {
         let (host, port) = get_from_ptero(&auth.identifier, &state.drakentemmer_client).await?;
 
@@ -82,31 +82,30 @@ pub async fn server_registrations(
 
     let connections = state.connections.lock().await;
 
+    let identifier = auth.identifier.clone();
+    let body = RegisterServerRequest {
+        register: body.register,
+        server_type: body.server_type,
+        identifier,
+        host,
+        port,
+    };
+
     for connection in connections.iter() {
         let sender = connection.sender.clone();
         let body = body.clone();
-        let identifier = auth.identifier.clone();
-        let host = host.clone();
         tokio::spawn(async move {
             let _ = sender
                 .send_serialized(WebSocketMessage {
                     message_id: nanoid!(),
                     message_type: crate::messages::MessageType::Init,
-                    payload: crate::messages::WebSocketMessagePayload::RegisterServerRequest(
-                        RegisterServerRequest {
-                            register: body.register,
-                            server_type: body.server_type,
-                            identifier,
-                            host,
-                            port,
-                        },
-                    ),
+                    payload: crate::messages::WebSocketMessagePayload::RegisterServerRequest(body),
                 })
                 .await;
         });
     }
 
-    Ok(())
+    Ok(Json(body))
 }
 
 pub async fn get_server_registrations(
