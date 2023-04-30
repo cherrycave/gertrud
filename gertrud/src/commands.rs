@@ -3,16 +3,20 @@ use axum::{
     http::{header::AUTHORIZATION, Request, StatusCode},
     middleware::{self, Next},
     response::Response,
-    routing::post,
+    routing::{get, post},
     Router,
 };
 use redis::AsyncCommands;
 
 use crate::{key_type::KeyType, state::BackendState};
 
-use self::server_registrations::{get_server_registrations, server_registrations};
+use self::{
+    server_registrations::{get_server_registrations, server_registrations},
+    settings::{get_settings, post_settings},
+};
 
 mod server_registrations;
+mod settings;
 
 #[derive(Clone)]
 pub struct AuthorizationExtension {
@@ -67,10 +71,12 @@ pub fn commands_router(state: BackendState) -> eyre::Result<Router> {
     Ok(Router::new()
         .nest(
             "/servers/",
-            Router::new().route(
-                "/registrations",
-                post(server_registrations).get(get_server_registrations),
-            ),
+            Router::new()
+                .route(
+                    "/registrations",
+                    post(server_registrations).get(get_server_registrations),
+                )
+                .route("/settings/:id", get(get_settings).post(post_settings)),
         )
         .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .with_state(state))

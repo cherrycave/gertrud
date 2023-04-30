@@ -54,6 +54,7 @@ async fn main() -> eyre::Result<()> {
         standby: Arc::new(Standby::default()),
         drakentemmer_client: Arc::new(drakentemmer.client(&client_token)),
         server_collection: gertrud_db.collection("registered_servers"),
+        settings_collection: gertrud_db.collection("server_settings"),
     };
 
     let websocket_router = websocket_router(state.clone())?;

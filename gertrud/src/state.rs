@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use drakentemmer::ClientApi;
-use mongodb::Collection;
+use mongodb::{bson::Document, Collection};
 use redis::aio::ConnectionManager;
 use tokio::sync::Mutex;
 
@@ -14,4 +14,5 @@ pub struct BackendState {
     pub standby: Arc<Standby>,
     pub drakentemmer_client: Arc<ClientApi>,
     pub server_collection: Collection<RegisteredServer>,
+    pub settings_collection: Collection<Document>,
 }
