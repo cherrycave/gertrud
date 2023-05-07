@@ -11,10 +11,12 @@ use redis::AsyncCommands;
 use crate::{key_type::KeyType, state::BackendState};
 
 use self::{
+    send_request::send_request,
     server_registrations::{get_server_registrations, server_registrations},
     settings::{get_settings, post_settings},
 };
 
+mod send_request;
 mod server_registrations;
 mod settings;
 
@@ -76,7 +78,8 @@ pub fn commands_router(state: BackendState) -> eyre::Result<Router> {
                     "/registrations",
                     post(server_registrations).get(get_server_registrations),
                 )
-                .route("/settings/:id", get(get_settings).post(post_settings)),
+                .route("/settings/:id", get(get_settings).post(post_settings))
+                .route("/send", post(send_request)),
         )
         .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .with_state(state))

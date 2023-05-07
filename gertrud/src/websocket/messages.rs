@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use self::message_impl::{GenericError, SendRequest};
-
 mod message_impl;
 pub use message_impl::*;
 

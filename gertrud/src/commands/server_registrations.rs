@@ -5,7 +5,7 @@ use mongodb::bson::doc;
 use nanoid::nanoid;
 
 use crate::{
-    messages::{RegisterServerRequest, ServerType, WebSocketMessage},
+    messages::{RegisterServerRequest, WebSocketMessage},
     mongodb::RegisteredServer,
     send_serialized::SendSerialized,
     state::BackendState,
@@ -17,7 +17,7 @@ use super::AuthorizationExtension;
 #[serde(rename_all = "camelCase")]
 pub struct RegisterServerBody {
     pub register: bool,
-    pub server_type: ServerType,
+    pub server_type: String,
 }
 
 pub async fn server_registrations(

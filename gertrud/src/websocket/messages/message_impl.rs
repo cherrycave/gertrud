@@ -15,15 +15,8 @@ pub struct SendRequest {
 #[serde(rename_all = "camelCase")]
 pub struct RegisterServerRequest {
     pub register: bool,
-    pub server_type: ServerType,
+    pub server_type: String,
     pub identifier: String,
     pub host: String,
     pub port: u16,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum ServerType {
-    Lobby,
-    Other,
 }
