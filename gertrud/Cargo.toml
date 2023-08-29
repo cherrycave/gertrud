@@ -28,5 +28,5 @@ redis = { version = "0.23.0", features = [
 bitflags = "2.2.1"
 eyre = "0.6.8"
 dotenvy = "0.15.7"
-dashmap = "5.4.0"
+dashmap = "5.5.3"
 mongodb = "2.5.0"
