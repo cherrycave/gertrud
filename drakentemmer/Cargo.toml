@@ -9,4 +9,4 @@ tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 async-lock = "2.7.0"
 async-trait = "0.1.68"
-eyre = "0.6.8"
+eyre = "0.6.12"
