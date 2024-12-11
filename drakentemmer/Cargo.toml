@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 reqwest = { version = "0.11", features = ["json", "rustls-tls"], default-features = false}
 tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1.0.200", features = ["derive"] }
 async-lock = "2.7.0"
 async-trait = "0.1.68"
 eyre = "0.6.8"
